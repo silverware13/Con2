@@ -106,7 +106,6 @@ void* philosopher_thread(void *thread_num)
  *
  * select: Used to a select a given name.
  * name: The array where we store the name.
- *
  */
 void get_name(int select, char name[])
 {
@@ -138,6 +137,12 @@ void get_name(int select, char name[])
 	}
 }
 
+/* Function: think
+ * -------------------------
+ * Thread sleeps between 1 and 20 seconds.
+ *
+ * name: The current philosopher's name.
+ */
 void think(char name[])
 {
 	int think_time = random_range(1, 20);
@@ -145,15 +150,36 @@ void think(char name[])
 	sleep(think_time);
 }
 
+
+/* Function: get_forks
+ * -------------------------
+ *
+ * name: The current philosopher's name.
+ */
 void get_forks(char name[])
 {
 
 }
 
+/* Function: eat
+ * -------------------------
+ * Thread sleeps between 2 and 9 seconds.
+ *
+ * name: The current philosopher's name.
+ */
 void eat(char name[])
 {
+	int eat_time = random_range(2, 9);
+	printf("%s started eating for %d seconds.\n", name, eat_time);
+	sleep(eat_time);
 }
 
+/* Function: think
+ * -------------------------
+ * Thread sleeps between 1 and 20 seconds.
+ *
+ * name: The current philosopher's name.
+ */
 void put_forks(char name[])
 {
 }
