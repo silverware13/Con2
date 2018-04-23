@@ -13,6 +13,7 @@
  */
 
 #define PHILOSOPHERS 5
+#include "mt19937ar.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,12 +21,12 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <ctype.h>
-
 //global variable(s)
 
 //function prototype(s)
 void spawn_threads();
 void* philosopher_thread();
+int random_range(int, int);
 
 //create mutex lock
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -95,4 +96,52 @@ void* philosopher_thread()
 		pthread_mutex_unlock(&lock);
 		sleep(1);
 	}
+}
+
+/* Function: random_range
+ * ----------------------
+ *  This function finds a random number between a min and max value (inclusive).
+ *  The random value is created using rdrand x86 ASM on systems that support it,
+ *  and it uses Mersenne Twister on systems that do not support rdrand.
+ *
+ *  min_val: The lowest possible random number.
+ *  max_val: The highest possible random number.
+ *
+ *  returns: A random number in the given range. In the case that min_val is
+ *  	     greater than max_val this function returns -1.
+ */
+int random_range(int min_val, int max_val)
+{
+	if(min_val > max_val)
+		return -1;
+
+	int output;
+	unsigned int eax;
+	unsigned int ebx;
+	unsigned int ecx;
+	unsigned int edx;
+
+	char vendor[13];
+	
+	eax = 0x01;
+
+	__asm__ __volatile__(
+	                     "cpuid;"
+	                     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+	                     : "a"(eax)
+	                     );
+	if(ecx & 0x40000000){
+		//use rdrand
+	__asm__ __volatile__(
+	                     "rdrand %0"
+                             : "=r"(output)
+	                     );
+	} else {
+		//use mt19937
+		output = genrand_int32();
+	}
+
+	//get random number in the range requested 
+	output = (abs(output) % (max_val + 1 - min_val)) + min_val;
+	return output;
 }
