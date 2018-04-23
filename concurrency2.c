@@ -13,6 +13,7 @@
  */
 
 #define PHILOSOPHERS 5
+#define FORKS 5
 #include "mt19937ar.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,30 +23,36 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-//global variable(s)
-
 //function prototype(s)
 void spawn_threads();
 void* philosopher_thread(void *thread_num);
 void get_name(int select, char name[]);
 void think(char name[]);
-void get_forks(char name[]);
+void get_forks(int select, char name[]);
 void eat(char name[]);
-void put_forks(char name[]); 
+void put_forks(int select, char name[]); 
 int random_range(int min_val, int max_val);
 
-//create mutex lock
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+//create mutex lock(s)
+pthread_mutex_t fork1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t fork2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t fork3 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t fork4 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t fork5 = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char **argv)
 {
-	printf("\n%d forks and %d plates of food have been placed on the table.\n", PHILOSOPHERS, PHILOSOPHERS);
+	printf("\n%d forks and %d plates of food have been placed on the table.\n", FORKS, PHILOSOPHERS);
 
 	//create threads and wait for their completion
 	spawn_threads();
 	
-	//destroy mutex lock	
-	pthread_mutex_destroy(&lock);
+	//destroy mutex lock(s)	
+	pthread_mutex_destroy(&fork1);
+	pthread_mutex_destroy(&fork2);
+	pthread_mutex_destroy(&fork3);
+	pthread_mutex_destroy(&fork4);
+	pthread_mutex_destroy(&fork5);
 	
 	return 0;
 }
@@ -91,9 +98,9 @@ void* philosopher_thread(void *thread_num)
 
 	while(true){
 		think(name);
-		get_forks(name);
+		get_forks(select, name);
 		eat(name);
-		put_forks(name);
+		put_forks(select, name);
 	}
 
 	free(thread_num);
@@ -150,15 +157,58 @@ void think(char name[])
 	sleep(think_time);
 }
 
-
 /* Function: get_forks
  * -------------------------
+ * The current philosopher attempts
+ * to pickup the fork to their right and left
+ * one philosopher always picks up the left fork
+ * first, the rest pick up the right first.
+ * In this context picking up a fork means to
+ * lock a mutex.
  *
+ * select: The id of the philosopher.
  * name: The current philosopher's name.
  */
-void get_forks(char name[])
+void get_forks(int select, char name[])
 {
+	switch(select){
+	
+		case 1 :
+			pthread_mutex_lock(&fork1);
+			printf("%s got fork #1.\n", name);
+			pthread_mutex_lock(&fork2);
+			printf("%s got fork #2.\n", name);
+			break;
+		
+		case 2 :
+			pthread_mutex_lock(&fork2);
+			printf("%s got fork #2.\n", name);
+			pthread_mutex_lock(&fork3);
+			printf("%s got fork #3.\n", name);
+			break;
 
+		case 3 :
+			pthread_mutex_lock(&fork3);
+			printf("%s got fork #3.\n", name);
+			pthread_mutex_lock(&fork4);
+			printf("%s got fork #4.\n", name);
+			break;
+
+		case 4 :
+			pthread_mutex_lock(&fork4);
+			printf("%s got fork #4.\n", name);
+			pthread_mutex_lock(&fork5);
+			printf("%s got fork #5.\n", name);
+			break;
+
+		case 5 :
+			//philosopher #5 is left handed.
+			pthread_mutex_lock(&fork1);
+			printf("%s got fork #1.\n", name);
+			pthread_mutex_lock(&fork5);
+			printf("%s got fork #5.\n", name);
+			break;
+	}
 }
 
 /* Function: eat
@@ -174,27 +224,71 @@ void eat(char name[])
 	sleep(eat_time);
 }
 
-/* Function: think
+/* Function: put_forks
  * -------------------------
- * Thread sleeps between 1 and 20 seconds.
+ * The current philosopher attempts
+ * to set down the fork to their right and left
+ * one philosopher always sets down the left fork
+ * first, the rest set down the right first.
+ * In this context picking up a fork means to
+ * unlock a mutex.
  *
+ * select: The id of the philosopher.
  * name: The current philosopher's name.
  */
-void put_forks(char name[])
+void put_forks(int select, char name[])
 {
+	switch(select){
+	
+		case 1 :
+			pthread_mutex_unlock(&fork1);
+			printf("%s set down fork #1.\n", name);
+			pthread_mutex_unlock(&fork2);
+			printf("%s set down fork #2.\n", name);
+			break;
+		
+		case 2 :
+			pthread_mutex_unlock(&fork2);
+			printf("%s set down fork #2.\n", name);
+			pthread_mutex_unlock(&fork3);
+			printf("%s set down fork #3.\n", name);
+			break;
+
+		case 3 :
+			pthread_mutex_unlock(&fork3);
+			printf("%s set down fork #3.\n", name);
+			pthread_mutex_unlock(&fork4);
+			printf("%s set down fork #4.\n", name);
+			break;
+
+		case 4 :
+			pthread_mutex_unlock(&fork4);
+			printf("%s set down fork #4.\n", name);
+			pthread_mutex_unlock(&fork5);
+			printf("%s set down fork #5.\n", name);
+			break;
+
+		case 5 :
+			//philosopher #5 is left handed.
+			pthread_mutex_unlock(&fork1);
+			printf("%s set down fork #1.\n", name);
+			pthread_mutex_unlock(&fork5);
+			printf("%s set down fork #5.\n", name);
+			break;
+	}
 }
  
 /* Function: random_range
  * ----------------------
- *  This function finds a random number between a min and max value (inclusive).
- *  The random value is created using rdrand x86 ASM on systems that support it,
- *  and it uses Mersenne Twister on systems that do not support rdrand.
+ * This function finds a random number between a min and max value (inclusive).
+ * The random value is created using rdrand x86 ASM on systems that support it,
+ * and it uses Mersenne Twister on systems that do not support rdrand.
  *
- *  min_val: The lowest possible random number.
- *  max_val: The highest possible random number.
+ * min_val: The lowest possible random number.
+ * max_val: The highest possible random number.
  *
- *  returns: A random number in the given range. In the case that min_val is
- *  	     greater than max_val this function returns -1.
+ * returns: A random number in the given range. In the case that min_val is
+ *          greater than max_val this function returns -1.
  */
 int random_range(int min_val, int max_val)
 {
