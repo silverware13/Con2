@@ -59,9 +59,9 @@ int main(int argc, char **argv)
 
 /* Function: spawn_threads
  * -----------------------
- *  Spawns five philosopher threads, then waits for threads to
- *  finish execution and join. Since these threads will run forever, we expect
- *  to block here indefinitely.
+ * Spawns five philosopher threads, then waits for threads to
+ * finish execution and join. Since these threads will run forever, we expect
+ * to block here indefinitely.
  */
 void spawn_threads()
 {
@@ -78,14 +78,13 @@ void spawn_threads()
 
 /* Function: philosopher_thread
  * -------------------------
- *  This function is called by a new consumer thread when it is created.
- *  
- *  The consumer attempts to get the mutex lock before checking if the 
- *  buffer has at least one item. It then consumes the newest item in 
- *  the buffer which causes it to display a number. Consuming an item 
- *  takes a number of seconds specified by the item. Once this thread
- *  has consumed an item or there is not any items
- *  in the buffer it releases the mutex lock.
+ * This function is called by a new philosopher thread when it is created.
+ * 
+ * First this thread gets its name using the identifer passed to it.
+ * Afterwards it loops forever, thinking, getting forks, eating,
+ * and putting forks down.
+ *
+ * *thread_num: A pointer to an identifer for the thread.
  */
 void* philosopher_thread(void *thread_num)
 {
