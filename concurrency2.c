@@ -21,22 +21,28 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <ctype.h>
+
 //global variable(s)
 
 //function prototype(s)
 void spawn_threads();
-void* philosopher_thread();
-int random_range(int, int);
+void* philosopher_thread(void *thread_num);
+void get_name(int select, char name[]);
+void think(char name[]);
+void get_forks(char name[]);
+void eat(char name[]);
+void put_forks(char name[]); 
+int random_range(int min_val, int max_val);
 
 //create mutex lock
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char **argv)
 {
-	printf("%d forks and %d plates of food have been placed on the table.\n", PHILOSOPHERS);
+	printf("\n%d forks and %d plates of food have been placed on the table.\n", PHILOSOPHERS, PHILOSOPHERS);
 
 	//create threads and wait for their completion
-	spawn_threads(producers, consumers);
+	spawn_threads();
 	
 	//destroy mutex lock	
 	pthread_mutex_destroy(&lock);
@@ -52,11 +58,11 @@ int main(int argc, char **argv)
  */
 void spawn_threads()
 {
-	printf("\nCreating %d philosopher threads.\n\n", PHILOSOPHERS);
-	
 	pthread_t thrd;
 	for(int i = PHILOSOPHERS; i > 0; i--){
-		pthread_create(&thrd, NULL, philosopher_thread, NULL);
+		int *thread_num = malloc(sizeof(*thread_num));
+		*thread_num = i; //thread_num will act as an id for thread
+		pthread_create(&thrd, NULL, philosopher_thread, (void *) thread_num);
 	}
 	
 	//join thread (this should never finish)
@@ -74,30 +80,84 @@ void spawn_threads()
  *  has consumed an item or there is not any items
  *  in the buffer it releases the mutex lock.
  */
-void* philosopher_thread()
+void* philosopher_thread(void *thread_num)
 {
+	int *select_ptr = (int*) thread_num; 
+	int select = *select_ptr;
+	char name[50];
+	get_name(select, name);
+	printf("%s sits down at the table.\n", name);
+	sleep(1);
+
 	while(true){
-		int no_lock;
-		no_lock = pthread_mutex_trylock(&lock);
-		if(no_lock){
-			sleep(1);
-			continue;
-		}
-		printf("Consumer has mutex lock.\n");
-		if(items_in_buffer > 0){
-			items_in_buffer--;
-			printf("Consumer is working for %d seconds to consume.\n", buffer[items_in_buffer].wait_period);
-			sleep(buffer[items_in_buffer].wait_period);
-			printf("%d\n", buffer[items_in_buffer].consumption_num);
-			printf("Consumer has removed an item.\n");
-		}	
-		printf("Consumer has released mutex lock.\n\n");
-		printf("Buffer is holding %d items.\n\n", items_in_buffer);
-		pthread_mutex_unlock(&lock);
-		sleep(1);
+		think(name);
+		get_forks(name);
+		eat(name);
+		put_forks(name);
+	}
+
+	free(thread_num);
+}
+
+/* Function: get_name
+ * -------------------------
+ * This function selects a philosopher name
+ * and assigns it to the input char array.
+ *
+ * select: Used to a select a given name.
+ * name: The array where we store the name.
+ *
+ */
+void get_name(int select, char name[])
+{
+	switch(select){
+	
+		case 1 :
+			strncpy(name, "Descartes", 50);
+			break;
+		
+		case 2 :
+			strncpy(name, "Socrates", 50);
+			break;
+
+		case 3 :
+			strncpy(name, "Confucius", 50);
+			break;
+
+		case 4 :
+			strncpy(name, "Plato", 50);
+			break;
+
+		case 5 :
+			strncpy(name, "Voltaire", 50);
+			break;
+
+		default :
+			strncpy(name, "Philosopher", 50);
+			break;
 	}
 }
 
+void think(char name[])
+{
+	int think_time = random_range(1, 20);
+	printf("%s started thinking for %d seconds.\n", name, think_time);
+	sleep(think_time);
+}
+
+void get_forks(char name[])
+{
+
+}
+
+void eat(char name[])
+{
+}
+
+void put_forks(char name[])
+{
+}
+ 
 /* Function: random_range
  * ----------------------
  *  This function finds a random number between a min and max value (inclusive).
