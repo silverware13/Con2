@@ -42,6 +42,10 @@ pthread_mutex_t fork5 = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char **argv)
 {
+	//seed random number generation
+	init_genrand(time(NULL));
+	srand(time(NULL));	
+
 	printf("\n%d forks and %d plates of food have been placed on the table.\n", FORKS, PHILOSOPHERS);
 
 	//create threads and wait for their completion
